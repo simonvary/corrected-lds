@@ -1,17 +1,15 @@
 # corrected-lds
 
-Seed-noise-corrected **Linear Datamodeling Score (LDS)** evaluation for training-data
+Corrected **Linear Datamodeling Score (LDS)** evaluation for training-data
 attribution (TDA).
 
 The LDS scores a TDA method by correlating its predictions with retrained-model outcomes
-across random training subsets. Retraining is seed-noisy, so the plain LDS is attenuated:
-biased low by a floor that more subsets never remove, and substantially so in practice (a
-single-retrain ground truth understates the noise-free LDS by ~37% in our CIFAR-10 pilot).
-This repository estimates the seed-noise variance from a few paired retrains and removes it,
-debiases the Spearman LDS for the finite number of masks, and ships the retrain pools that
-make all of it measurable.
+across random training subsets. Retraining is noisy based on the training randomness, so 
+the plain LDS is attenuated. This repository estimates the seed-noise variance 
+from a few paired retrains and removes it, debiases the Spearman LDS for the finite 
+number of masks, and provides the retrain pools that allow simulating the LDS estimators.
 
-Three nouns name the artifacts: a **pool** is an (R seeds × M masks × Q queries) array of
+Naming convention: a **pool** is an (R seeds × M masks × Q queries) array of
 retrain readouts, a **tauq** is one TDA method's (n_train × Q) score matrix, and a **bank** is
 a released directory bundling one pool with its tauqs.
 
