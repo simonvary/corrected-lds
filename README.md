@@ -93,8 +93,8 @@ corrected_lds/
 ├── tda_noise.py           the attributor's own ensemble noise (the 1/E law)
 ├── evaluate.py            one bank → the scored JSON result
 └── cli.py                 the corrected-lds command
-paper/                     the nine figure scripts (figN.py), their stages, plotdata and figures
-slides/                    the talk's figure scripts, plotdata and figures, built as paper/'s
+paper/                     figure scripts (figN.py), plotdata and figures
+slides/                    figure scripts for slides
 ```
 
 `pools/` and `tda/` spend GPU time once to fill a bank; `banks/` defines a bank's identity and
