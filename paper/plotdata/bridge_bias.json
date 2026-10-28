@@ -1,0 +1,114 @@
+{
+ "schema": 1,
+ "figure": "bridge_bias",
+ "banks": {
+  "cifar10": {
+   "dataset": "cifar10",
+   "M": 300,
+   "R": 40,
+   "Q": 2000,
+   "n": 50000,
+   "alpha": 0.5,
+   "train_hash": "0c79d6744e51f344",
+   "query_hash": "72eeeba5111be6e3",
+   "code_version": "corrected-lds-0.1.0"
+  },
+  "qnli": {
+   "dataset": "qnli",
+   "M": 400,
+   "R": 20,
+   "Q": 2000,
+   "n": 50000,
+   "alpha": 0.5,
+   "train_hash": "1615f1b2274e6f81",
+   "query_hash": "c6a11dfc0feaeb7f",
+   "code_version": "corrected-lds-7a1a04f"
+  }
+ },
+ "panels": {
+  "cifar10": [
+   {
+    "tda": "pool_tda_ekfac",
+    "label": "EK-FAC",
+    "D": 0.00017749980360953765,
+    "D_se": 0.000324808998210531,
+    "se_estimator": 0.001603890990571063,
+    "truth": 0.10775322602769255,
+    "conversion": -0.00013732912190291894,
+    "conversion_gaussian": 0.00024761752755506696,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   },
+   {
+    "tda": "pool_tda_trak1",
+    "label": "TRAK",
+    "D": -0.00030657368830687426,
+    "D_se": 0.00032036140820472584,
+    "se_estimator": 0.0010649711212309158,
+    "truth": 0.05095107886879806,
+    "conversion": -0.00031268401803750435,
+    "conversion_gaussian": 0.00014670033725739314,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   },
+   {
+    "tda": "pool_tda_source_L3",
+    "label": "SOURCE",
+    "D": -1.3472118013668766e-06,
+    "D_se": 0.00044010653192031693,
+    "se_estimator": 0.0021627518570047763,
+    "truth": 0.1461038962623154,
+    "conversion": -6.105128825890857e-05,
+    "conversion_gaussian": 0.00030038969212715927,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   }
+  ],
+  "qnli": [
+   {
+    "tda": "pool_tda_ekfac",
+    "label": "EK-FAC",
+    "D": 0.002299174867301468,
+    "D_se": 0.0006578214571943709,
+    "se_estimator": 0.0018760375782324098,
+    "truth": 0.48281231756489973,
+    "conversion": 0.0021204526324491075,
+    "conversion_gaussian": 0.00072717500353838,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   },
+   {
+    "tda": "pool_tda_trak1",
+    "label": "TRAK",
+    "D": -1.0851334967754145e-05,
+    "D_se": 0.0003651071876948703,
+    "se_estimator": 0.0005216854283847444,
+    "truth": 0.23965979854669878,
+    "conversion": 3.7785765465764286e-05,
+    "conversion_gaussian": 0.00034105268925199164,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   },
+   {
+    "tda": "pool_tda_tracin",
+    "label": "TracIn",
+    "D": 0.0007101992091625986,
+    "D_se": 0.0026377781810478893,
+    "se_estimator": 0.0037853568082099934,
+    "truth": 0.15592213988796583,
+    "conversion": 0.0011063357547981003,
+    "conversion_gaussian": 0.00022135304405963702,
+    "n_draws": 200,
+    "n_truth_subsets": 40
+   }
+  ]
+ },
+ "params": {
+  "derived_from": [
+   "bridge_estimators.json"
+  ],
+  "E": "E1 replicas",
+  "interval": "95%, delete-a-block jackknife over masks (20 blocks)",
+  "band": "+-1 SE of the reconstructed estimate (SD over 2-seed draws at the full mask set)"
+ }
+}

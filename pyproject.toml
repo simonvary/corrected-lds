@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "corrected-lds"
+version = "1.0.0"
+description = "Debiased, disattenuated Linear Datamodeling Score (LDS) evaluation for training-data attribution"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Simon Vary" }, { name = "Alireza Mousavi-Hosseini" }]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+# GPU half (gold pool builders + TDA scores). Version pins are load-bearing:
+# transformers 4.46+/5.x break traker's vmap path on BERT; traker 0.3.2's Eq.15
+# ensemble aggregation and kronfluence 1.0.1's damping/factor semantics are what the
+# released tauq banks were produced with. fast_jl (TRAK's CUDA projector, required for
+# the qnli preset) is deliberately NOT declared here — it must be built against the
+# installed torch (see docs/REPRODUCE.md).
+gpu = [
+    "torch>=2.4",
+    "traker==0.3.2",
+    "transformers==4.36.2",
+    "datasets>=2.14",
+    "kronfluence==1.0.1",
+    "pyarrow>=15",    # decode the pinned HF CIFAR-10 parquet (build-data)
+    "pillow>=10",     # decode the parquet's PNG image bytes (build-data)
+]
+figs = ["matplotlib>=3.8"]
+# ImageNet setup: gated HF parquet download + the torchvision ResNet-18, ffcv-free by
+# design; torchvision must pair with the installed
+# torch (>=0.19 pairs with torch>=2.4).
+imagenet = [
+    "torchvision>=0.19",
+    "huggingface_hub>=0.24",   # >=0.24 for the huggingface_hub.errors module
+    "pyarrow>=15",
+    "pillow>=10",
+]
+# bank sharing: `push-bank` uploads released banks to a HF dataset
+# repo. fetch-banks deliberately needs NOTHING here (stdlib urllib + in-repo manifest).
+hub = ["huggingface_hub>=0.24"]
+
+[project.scripts]
+corrected-lds = "corrected_lds.cli:main"
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.8",   # render the paper figure smoke test
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/corrected_lds"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

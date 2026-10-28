@@ -1,0 +1,66 @@
+{
+ "format": 2,
+ "_note": "Trust anchor for `corrected-lds fetch-banks`, committed so that downloads are checked against in-repo hashes: each file is fetched from <url>/<bank>/<file> and kept only if its sha256 matches.",
+ "url": "https://huggingface.co/datasets/corrected-lds/data/resolve/8aabc7644540c272f5c10d88df608de6774a0657",
+ "banks": {
+  "cifar10": {
+   "pool.npz": "28f4eabb9fca617ec9d45bd32fd3e95d8217acb66ec1df2ee555096fb1b620b1",
+   "tauq_ekfac_e30.npz": "3f849d90a85ff208a09172a5329bac5d73bff6b587c8e0b935627775cb129ae7",
+   "tauq_source_L3_e30.npz": "f1ba1bdf82157eb1b282bb7e94bb793fddbf7153557a907c03f36d7621384b39",
+   "tauq_trak10_e10.npz": "161b822d4686aa13ea243926bcd207a8406a09d3535f64daedfbe1e2197a3e31",
+   "tauq_trak10_e2.npz": "82c673034a5c02999e15b5a446b368dc7c888f6f271d44b25f5f86de8c7e6aa2",
+   "tauq_trak1_e100.npz": "1dbcf3421d3ad374db14367f57aea5a2ed663093d89feb923055deb081d29b4f",
+   "tauq_trak1_e20.npz": "499ad206dbf5401da614a36ac2db97c2560cb31fb67bace36600997ac32e6965",
+   "pool_tda_ekfac.npz": "596cb9ceeb6aab0692d6a11db556c81f7008789af5ef181d6fd0e7a9afba83c3",
+   "pool_tda_source_L3.npz": "eda5c100d21479c53153e96a52626a11e319b03822013dc6823e13b0e8eff9b2",
+   "pool_tda_trak1.npz": "bac2ed758bc3ee105ac1dcf3c5e65d569d57fcff8662863c9034a01ba92b6ee0",
+   "pool_tda_trak10.npz": "f7ad32146e22b06c07af39d33944c6dc2e15ac3c5fd3754920cf5296943dd49c",
+   "pool_tda_trak20.npz": "8696cf4394e9b39b6fa264331939aedc9b398748ca26a63d4b2403b91278a915"
+  },
+  "imagenet": {
+   "pool.npz": "3c984ba48cef32b1fcc38c85cf6cd2e6485378e02d46779f541cab1f6dae7e4d"
+  },
+  "mnist": {
+   "pool.npz": "f0596ee1df9ba2e43d128e987785bb1bed8849bca04a4b9768cd9206b46096c1",
+   "tauq_ekfac_e30.npz": "63a48375c8598b6e087391eb368c6766e6463ceab5b1cb64ff4023be8228c395",
+   "tauq_source_L3_e30.npz": "6a9962c94e34da2cffd1f938436bd14b70ccd421db8e1d3f489f7ed9dadb6f25",
+   "tauq_trak1_e100.npz": "5909fa791617ce399c056cc55adbc62a0d279a6d5155c0431b9e9b9d0843a346"
+  },
+  "qnli": {
+   "pool.npz": "28af92131ebbbe4f6de719785944b018ef009e56266f849c730cd49e8fb96502",
+   "tauq_ekfac_e20.npz": "32595024c4befce6b24237060d139c197f7f9f66343f51358739bb8765b4ecd9",
+   "tauq_tracin_e20.npz": "76957bf0cd847b689f2c49c2726773832c9f611593083f4b68cc3ffa6a7240b8",
+   "tauq_trak1_e10.npz": "dd72f500ecdeb04ecce24ec13fa3ad3d441cff476b79279c2a3052975108825e",
+   "tauq_trak1_e100.npz": "49ac1fb6d3c3b1785804008c5f8604b079a3e698054076b40f2090ea6264dfad",
+   "tauq_trak1_e20.npz": "65d170954eda29ec4de944cc6f2a4e938adb7d36c4d8ae02611804240a2bb6d2",
+   "tauq_trak1_e50.npz": "4001241a0127dadf9d467348da3d9923a020f326561f3a19e0716b529be0d33c",
+   "tauq_trak5_e10.npz": "dff938f24213057380c2bd9ac65c7b2418b0ce23d5e0dde41ecfd6b9ef632e89",
+   "tauq_trak5_e2.npz": "72bf99b396cdc25a8e6807d26d3bb52a37575a023afe23ebf95e42b2c44badd4",
+   "tauq_trak5_e20.npz": "6b768da1e12df7eff7ed445de0abd025c80f1925578bdebd806f817e0c85cdde",
+   "tauq_trak5_e4.npz": "d71ab312fa35ab4b5ad38884134b58afeb1cb19683d326b4e2a7a69528319743",
+   "pool_tda_ekfac.npz": "b071423edf9c06bf62099d69126af1e75092c9a19511b2341c18497a0b8f3161",
+   "pool_tda_tracin.npz": "adf89927909b119cd92e6ad25eb36ae024a44c0c3b2f99a69415b4a6dd1d3fd3",
+   "pool_tda_trak1.npz": "40285a7840ff97aa77da4e1afff63b09bd47c8a45ca034602937436eca0c1cb0",
+   "pool_tda_trak5.npz": "94bd4d098131d29f3fb472bc567bd05de21ab1047cfa0e4c906a879c11cd81dd"
+  },
+  "wikitext2_gpt2_bae": {
+   "pool.npz": "bfc6bfb6d6b5d12473b6ae9dea5889e817e3a8360b4c62a77b52dff785d81923",
+   "pool_dropout_readout.npz": "4f120391158f95530b4054b02e13a933602a85e5078818e25b2bc5e0339b21cb",
+   "tauq_ekfac_bergson.npz": "2d309f6c2cf9f9b5765ac2fcf9085ab5ba5552ed958a28114982d860e321f29d",
+   "tauq_ekfac_e10.npz": "528e87703ed4b3e9b598ec202385564889b1b612c9c327f87eb7064cea8e10a8",
+   "tauq_ekfac_e5.npz": "25330824edbc6dc9d7b8a84616e390a8306510e91fe55b58ce9c2324d02854d0",
+   "tauq_source_L3_e1.npz": "78aaa648d99a5628ce5fc5fd52b3377b06866a98cc1ee8def53ee057e6739831",
+   "tauq_tracin_e10.npz": "771a1e38d4b6abc428fa8fc51819fdc94771b1e2e3b07a0de04e5e39066c8c25",
+   "tauq_trak1_e10.npz": "ff786e0f2b3303f424856a16215d15993088d20c28ee7c5d4094d19fc84094b1",
+   "tauq_trak1_e20.npz": "10a00671e79af8b969bcbd9c160c8b7867ff273aa4c912cabeca8bbbe7766fbd",
+   "tauq_trak1_e50.npz": "8624227f5c02f54648a75ba32e7e7e762a2ecfdf97d655c75caecfcaf5aaaa5e",
+   "tauq_trak5_e10.npz": "032c063f4014c0488502f1aa5c78d897b00c871538479d5fefaf7d5c1b5528ba",
+   "tauq_trak5_e2.npz": "2514f70a2331371173076432dff9749359fad9e1964ebd6b6be1ae9fb164e0d0",
+   "tauq_trak5_e4.npz": "bad7c4b447b1fb96774c44c123347624cde988e1770af6ad390ca85a936d6c22",
+   "pool_tda_ekfac.npz": "e676a8da5540afc8d94d5a47d0123e8f46c3fed51433144f23165bcee632b5df",
+   "pool_tda_tracin.npz": "fdf00440df93ae971230319381912e2341a5e695992a30b348a9ad0c253c3b30",
+   "pool_tda_trak1.npz": "8600b01a9750f5caa937888a3e9edf8c10c15d8822ff06e1b0c90867994eab20",
+   "pool_tda_trak5.npz": "d9b725b5eb55b7f9712f5025f03ac208c647cc7c5741231133ac641e97925656"
+  }
+ }
+}

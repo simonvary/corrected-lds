@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code or the banks, please cite the paper below."
+title: corrected-lds
+version: 1.0.0
+date-released: 2026-10-28
+license: MIT
+repository-code: "https://github.com/simonvary/corrected-lds"
+authors:
+  - family-names: Vary
+    given-names: Simon
+  - family-names: Mousavi-Hosseini
+    given-names: Alireza
+preferred-citation:
+  type: conference-paper
+  title: "Efficient and Accurate Causal Validation of Training Data Attribution"
+  authors:
+    - family-names: Vary
+      given-names: Simon
+    - family-names: Mousavi-Hosseini
+      given-names: Alireza
+    - family-names: Grosse
+      given-names: Roger
+  collection-title: "ATTRIB: Attributing Model Behavior at Scale, NeurIPS 2026 Workshop"
+  year: 2026

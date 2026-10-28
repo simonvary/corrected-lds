@@ -1,0 +1,29 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# released bank data — fetched, never committed
+/banks/
+# locally built pools (build-pool output)
+/pools/
+
+# local working notes, never committed
+docs/plan.md
+docs/plan-imagenet.md
+docs/plan-tracin.md
+docs/plan-hub.md
+
+# local tool state
+.claude/
+AGENTS.md
+
+# local research drivers and generated results
+/scripts/
+/outputs/
+
+# figure drafts stay local
+/paper/drafts/

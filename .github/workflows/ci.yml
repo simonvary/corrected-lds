@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - run: uv run ruff check
+      - run: uv run pytest
+
+  # The test files that skip above for lack of torch: CPU pool training, TRAK, TracIn,
+  # EK-FAC, SOURCE, and the WikiText-2 and ImageNet tasks.  CPU torch from the PyTorch
+  # index; every other package pinned to the release stack (env/release-gpu-2026-10.txt
+  # without its CUDA, torch and fast_jl lines).
+  test-torch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv -p 3.12
+      - run: uv pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: grep -v -E '^(torch|torchvision|torchaudio|triton|nvidia-|fast_jl)' env/release-gpu-2026-10.txt > "$RUNNER_TEMP/constraints.txt"
+      - run: uv pip install -c "$RUNNER_TEMP/constraints.txt" -e ".[gpu,imagenet,hub]" pytest pyyaml matplotlib
+      - run: .venv/bin/python -m pytest
+
+  # Only the runtime deps (numpy, scipy): the core package imports, and the CLI starts,
+  # without torch.
+  bare-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked --no-dev
+      - run: uv run --no-dev python -c "import corrected_lds; print(corrected_lds.__version__)"
+      - run: uv run --no-dev corrected-lds --help
