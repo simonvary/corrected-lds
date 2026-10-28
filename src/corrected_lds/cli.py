@@ -905,9 +905,9 @@ def _trajectories(p, recipe, data, traj_dir, n_runs, cps, k, ckpt_every, device,
 
 def _cmd_compute_tau_ekfac_trajectories(args):
     """EK-FAC at the final checkpoint of each full-set run, damping from the preset: Bae et
-    al.'s IF protocol, used for every released ``pool_tda_ekfac`` (PROVENANCE "EK-FAC
-    protocol correction").  The runs are TracIn's trajectories (``tracin_ckpts/``, seeds
-    TRACIN_SEED_BASE + r), never TRAK's alpha=0.5 subset members: IF wants full-set models."""
+    al.'s IF protocol, used for every released ``pool_tda_ekfac``.  The runs are TracIn's
+    trajectories (``tracin_ckpts/``, seeds TRACIN_SEED_BASE + r), never TRAK's alpha=0.5 subset
+    members: IF wants full-set models."""
     p = PRESETS[args.preset]
     tcfg, ecfg = p.get("tracin"), p.get("ekfac")
     if tcfg is None:

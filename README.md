@@ -64,7 +64,6 @@ bank's files.
   rebuilding banks on GPU.
 - [`docs/FORMATS.md`](docs/FORMATS.md): what each file holds, how files are named, what
   `evaluate` reports, and the attribution methods.
-- [`PROVENANCE.md`](PROVENANCE.md): how each released file was made.
 
 ## Code layout
 

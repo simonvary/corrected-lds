@@ -38,7 +38,7 @@ EXEMPT = {
 }
 
 # Ids a reader can resolve or place: upstream pins, the commits stamped into released pools
-# (in the private development history, as PROVENANCE says), and the revision
+# (in the private development history, as FORMATS says), and the revision
 # banks-manifest.json pins; 16 hex digits are hash pins.
 PINS = (
     "0ad2e5b0ce09207d2af0e80383fe2d952dd8e747",    # bergson, the WikiText-2 trainer

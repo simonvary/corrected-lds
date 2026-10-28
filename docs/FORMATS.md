@@ -1,8 +1,7 @@
 # Formats and methods
 
 What is inside each bank file, how the files are named, what `evaluate` reports, and what each
-attribution method computes. How the released files were made is in
-[`PROVENANCE.md`](../PROVENANCE.md); how to rebuild them is in [`REPRODUCE.md`](REPRODUCE.md).
+attribution method computes. How to rebuild the files is in [`REPRODUCE.md`](REPRODUCE.md).
 
 A **bank** is one directory: a `pool.npz` of retrain readouts plus the attribution files that
 pair with it. All files are plain `.npz` archives with every identity field stored inside; the
@@ -24,6 +23,10 @@ loaders in `corrected_lds.banks.artifacts` validate them and refuse anything inc
 | `schema`, `code_version`, `completed_cells`, `done_rows` | | format version (3), the code that built it, build bookkeeping |
 
 The GPT-2 bank also stores `losses` and per-replica `baselines`.
+
+A `code_version` is a commit of the private development history (`-dirty` for uncommitted
+changes), the package version when built outside a git checkout, or, for the GPT-2 pools, a
+fixed label; the public repository starts at v1.0.0.
 
 ### `tauq_<method>_e<E>.npz`: one attributor's scores
 
@@ -156,5 +159,4 @@ replicas give both the curve and its limit.
 
 TRAK's members see half the data each; EK-FAC, TracIn and SOURCE score models trained on all
 of it, so a TRAK model and an EK-FAC model differ in training cost as well as in method. The
-GPT-2 bank's SOURCE file comes from bergson's own scorer (its Adam variant); see
-`PROVENANCE.md`.
+GPT-2 bank's SOURCE file comes from bergson's own scorer (its Adam variant).

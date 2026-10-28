@@ -2,7 +2,7 @@
 
 Torch-free, so the CPU-only install can import a bank's identity: a recipe's ``to_dict()`` is
 the pool identity stamped into every ``pool.npz``.  The content hashes (sha256/16 of the raw
-array bytes) pin the canonical row order, which an order-blind digest cannot (PROVENANCE.md).
+array bytes) pin the canonical row order, which an order-blind digest cannot.
 """
 
 import hashlib

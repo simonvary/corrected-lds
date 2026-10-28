@@ -6,8 +6,7 @@ Three levels, each needing more than the one before:
 2. **Rebuild the paper's figures** from the released banks: CPU, about an hour.
 3. **Rebuild a bank**: GPU, from a few GPU-hours (one attribution file) to thousands (a pool).
 
-File formats and method definitions are in [`FORMATS.md`](FORMATS.md); how each released file
-was made is in [`PROVENANCE.md`](../PROVENANCE.md).
+File formats and method definitions are in [`FORMATS.md`](FORMATS.md).
 
 ## Setup
 
