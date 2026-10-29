@@ -25,7 +25,7 @@ MAX_GROUPS = 8            # disjoint groups averaged per size; caps the cost at 
 SIZES = [1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 30, 34, 50, 75, 100]
 DATA_FRAC = 0.72          # of the axes width; the rest is the label gutter
 # E axis drawn per setup, a display cap only, so TRAK-1's long tail does not crush the rest
-E_SHOWN = {"cifar10": 20, "qnli": 20}
+E_SHOWN = {"cifar10": 20, "qnli": 20, "wikitext2_gpt2_bae": 10}
 LABEL_GAP = 0.15          # the gutter labels' least vertical gap, in axes fraction
 
 METHODS = {
@@ -38,6 +38,10 @@ METHODS = {
              ("pool_tda_trak5", "TRAK-5", "#d4694f", "^"),
              ("pool_tda_trak1", "TRAK-1", "#e0937f", "v"),
              ("pool_tda_tracin", "TracIn", "#7d2b20", "D")],
+    "wikitext2_gpt2_bae": [("pool_tda_ekfac", "EK-FAC", "#00441b", "s"),
+                           ("pool_tda_trak5", "TRAK-5", "#238b45", "^"),
+                           ("pool_tda_trak1", "TRAK-1", "#a1d99b", "v"),
+                           ("pool_tda_tracin", "TracIn", "#74c476", "D")],
 }
 
 

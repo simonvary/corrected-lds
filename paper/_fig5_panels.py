@@ -1,20 +1,15 @@
-"""The bridge check ``fig5`` draws (CIFAR-10 / ResNet-9, QNLI / BERT): is the arcsin bridge
-``(6/pi) arcsin(r/2)``, exact for a bivariate normal (score, readout) pair, safe on figure
-2(b,e)'s reconstructed rho_5 route?  Same three methods (E=1), 5-seed readouts:
-
-  (a, c) the consequence: reconstructed minus naive 5-seed Spearman on all masks (95%
-         block-jackknife interval) against +-1 SE of one estimate (``bridge_bias.json``).
-  (b, d) the condition: the chi-square (Mahalanobis) Q-Q plot of D^2, pooled over queries,
-         averaged over 10 of figure 2's 5-seed subsets; the identity line means bivariate
-         normal.  Kept for the appendix: the detrended ``curve`` and each method's 90%
-         Gaussian ``band``, from 40 joint Haar rotations of the mask axis (each readout
-         centred first, so its mean cannot become a spurious Gaussian component).
+"""Figure 5's bivariate-normality check, one row per bank: is the arcsin bridge
+``(6/pi) arcsin(r/2)``, exact for a bivariate normal (score, readout) pair, safe on the
+reconstructed rho_5 route?  Same three methods (E=1), 5-seed readouts: the chi-square
+(Mahalanobis) Q-Q plot of D^2, pooled over queries, averaged over 10 of figure 2's 5-seed
+subsets; the identity line means bivariate normal.  Kept: the detrended ``curve`` and each
+method's 90% Gaussian ``band``, from 40 joint Haar rotations of the mask axis (each readout
+centred first, so its mean cannot become a spurious Gaussian component).
 
 The null is exact at finite M (``_assumptions._qq_grid``).  ``--recompute`` needs the banks
 (a few minutes on CPU).
 """
 
-import json
 import os
 import sys
 
@@ -23,7 +18,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _assumptions as fa
 import _shared
-from _harness import PLOTDATA_DIR, bank_stamp, run
+from _harness import bank_stamp, run
 
 from corrected_lds import load_pool, load_pool_tda, predictions_tda
 
@@ -83,21 +78,16 @@ def _qq_bank(banks_root, bank, rng):
 
 
 def compute(banks_root):
-    with open(os.path.join(PLOTDATA_DIR, "bridge_bias.json")) as fh:
-        bias = json.load(fh)
     rng = np.random.default_rng([_shared.SEED, 11])
     banks, qq = {}, {}
     for bank in _shared.B_METHODS:
         banks[bank], qq[bank] = _qq_bank(banks_root, bank, rng)
-        if banks[bank] != bias["banks"][bank]:
-            raise SystemExit(f"[fig5] {bank}: bank differs from bridge_bias")
         print(f"[fig5] {bank}: band widths agree to "
               f"{100 * qq[bank]['band_spread']:.0f}% -> "
               f"{'one shared band' if qq[bank]['use_shared'] else 'per-method bands'}",
               flush=True)
-    return {"banks": banks, "bias": bias["panels"], "qq": qq,
-            "params": {"derived_from": ["bridge_bias.json"], "n_subsets": N_SUBSETS,
-                       "n_surrogates": N_SURR, "band_pct": BAND_PCT,
+    return {"banks": banks, "qq": qq,
+            "params": {"n_subsets": N_SUBSETS, "n_surrogates": N_SURR, "band_pct": BAND_PCT,
                        "shared_band_tol": SHARED_BAND_TOL, "E": "E1 replicas",
                        "readout": f"{_shared.TARGET_R}-seed mean, figure 2's subsets"}}
 

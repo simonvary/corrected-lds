@@ -60,18 +60,16 @@ corrected-lds fetch-banks --bank cifar10 --bank mnist --bank qnli --bank wikitex
 R="--recompute --banks-root banks"
 # stage 1: reads banks only
 for s in _rmse_corrected _rmse_heldout _spearman_debias _fig2_panels _bridge_estimators \
-         _proxy_sweep fig3 fig6 fig8 fig9; do python paper/$s.py $R; done
-# stage 2
-for s in _fig1_panels fig2 _bridge_bias fig4 fig7; do python paper/$s.py $R; done
-# stage 3, then 4
-for s in fig1 _fig5_panels; do python paper/$s.py $R; done
-python paper/fig5.py $R
+         _proxy_sweep _fig5_panels fig3 fig6 fig8 fig9; do python paper/$s.py $R; done
+# stage 2, then 3
+for s in _fig1_panels fig2 fig4 fig5 fig7; do python paper/$s.py $R; done
+python paper/fig1.py $R
 # the talk's figures (slides/README.md): the cifar10 bank, then figure 2's plotdata
 for i in 1 2 3; do python slides/fig_slides$i.py $R; done
 ```
 
-All of it runs on CPU. A recompute on the same machine is byte-identical to the committed
-plotdata; another CPU or BLAS differs in the last digits.
+All of it runs on CPU. A recompute reproduces the committed plotdata up to the last digits
+(about 1e-12 relative), which depend on the CPU, the BLAS and its threading.
 
 | figure | script and the stages it reads | bank files read |
 |---|---|---|
@@ -79,7 +77,7 @@ plotdata; another CPU or BLAS differs in the last digits.
 | 2 | `fig2` ← `_fig2_panels` | pools of cifar10, qnli and wikitext2; cifar10 `pool_tda_{source_L3,ekfac,trak10,trak20,trak1}`; qnli and wikitext2 `pool_tda_{ekfac,trak5,tracin,trak1}` |
 | 3 | `fig3` | the three pools; `pool_tda` of cifar10 `{ekfac,source_L3,trak10}`, qnli and wikitext2 `{ekfac,tracin,trak5}`; wikitext2 `tauq_source_L3_e1` |
 | 4 | `fig4` ← `_spearman_debias` | cifar10: pool, `tauq_trak1_e100` |
-| 5 | `fig5` ← `_fig5_panels` (← `_bridge_bias` ← `_bridge_estimators`), `_proxy_sweep` | pools of cifar10 and qnli; cifar10 `pool_tda_{ekfac,trak1,source_L3}`; qnli `pool_tda_{ekfac,trak1,trak5,tracin}` |
+| 5 | `fig5` ← `_fig5_panels`, `_bridge_estimators`, `_proxy_sweep` | pools of cifar10, qnli and wikitext2; cifar10 `pool_tda_{ekfac,trak1,source_L3}`; qnli `pool_tda_{ekfac,trak1,trak5,tracin}`; wikitext2 `pool_tda_{ekfac,trak1,tracin}` |
 | 6 | `fig6` | cifar10, qnli and wikitext2: pool plus three `pool_tda` files each |
 | 7 | `fig7` ← `fig6` | none |
 | 8 | `fig8` | cifar10: pool, `tauq_trak1_e100` |

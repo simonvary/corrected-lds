@@ -19,19 +19,18 @@ Haar rotation of the mask axis, applied jointly to g and all R seed readouts bef
 k-blocks (``min(R // k, G_MAX)`` disjoint seed means) are formed, keeps every per-query
 covariance and imposes joint normality.  Footings: E=1 (figure 2's g) and the full ensemble.
 
-CPU-only.  ``plotdata/proxy_sweep.json`` keeps every surrogate draw (arrays to 6 significant
-figures), so other bands or views need no banks; it is rewritten after each bank with
-``"complete": false``, and missing banks are skipped and named.  Per ``panels[bank]``:
+CPU-only.  ``plotdata/proxy_sweep.json`` keeps each statistic and a summary of its surrogate
+null, not the draws (another band or view needs the banks); it is rewritten after each bank
+with ``"complete": false``, and missing banks are skipped and named.  Per ``panels[bank]``:
 
-  ks, lambda_median, null_q (the exact-null D^2 quantiles the curves are offsets from)
+  ks, lambda_median
   footings[E1 | full]:  E (attributor ensemble size), per_k, k_inf
     per_k[i]:  k, blocks, noise_share (= lambda_median / k);
-               <stat> in STATS: data, control, null (N_SURR surrogate values), null_mean,
-                   null_sd, null_lo, null_hi (BAND_PCT percentiles of null);
-               qq_curve (data D^2 quantiles - null_q), qq_lo, qq_hi (surrogate band),
-               qq_exceed, qq_exceed_null (leave-one-out surrogate exceedance)
-    k_inf[<stat>]:  excess (data intercept in 1/k minus the null's), null_sd, z,
-                    null (the N_SURR surrogate intercepts, centred)
+               <stat> in STATS: data, control, null_mean, null_sd, null_lo, null_hi
+                   (BAND_PCT percentiles of the N_SURR surrogate values);
+               qq_exceed, qq_exceed_null (share of the D^2 quantile curve outside the
+                   surrogate band, for the data and, leave-one-out, for a surrogate)
+    k_inf[<stat>]:  excess (data intercept in 1/k minus the null's), null_sd, z
 """
 
 import json
@@ -52,8 +51,8 @@ from corrected_lds import (
     load_pool_tda,
     pearson_to_spearman,
     predictions_tda,
-    seed_noise_variance_stacked,
 )
+from corrected_lds.evaluate import _seed_noise_fn
 
 SEED = 0
 CLIP = 2.0
@@ -61,10 +60,9 @@ N_SURR = 40                      # Gaussian rotation surrogates per bank
 G_MAX = 10                       # disjoint k-seed blocks averaged at each k
 BAND_PCT = (5.0, 95.0)
 K_GRID = {"cifar10": [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 35, 40],
-          "qnli": [1, 2, 4, 6, 8, 10, 15, 20]}
+          "qnli": [1, 2, 4, 6, 8, 10, 15, 20], "wikitext2_gpt2_bae": [1, 2, 4, 6, 8, 10, 15, 20]}
 FOOTINGS = {"E1": [0], "full": None}     # replicas passed to predictions_tda
 STATS = ["bridge", "mardia", "reject", "lin", "het", "qq_rms", "skew_f", "kurt_f"]
-BANKS = {spec["key"]: spec for spec in fa.BANKS}
 
 
 def _haar(m, rng):
@@ -122,25 +120,19 @@ def _intercept(ks, values):
     return float(np.polyfit(1.0 / np.asarray(ks, float), values, 1)[1])
 
 
-def _sig(x):
-    """An array as a list at 6 significant figures — the bulk of the saved file."""
-    return [float(f"{v:.6g}") for v in np.ravel(x)]
-
-
 def _exceed(curve, lo, hi):
     return float(((curve < lo) | (curve > hi)).mean())
 
 
 def _bank(banks_root, key, rng):
-    spec = BANKS[key]
     pool = load_pool(os.path.join(banks_root, key, "pool.npz"))
-    tda = load_pool_tda(os.path.join(banks_root, key, f"{spec['tda']}.npz"))
+    tda = load_pool_tda(os.path.join(banks_root, key, f"{fa.SWEEP_TDA[key]}.npz"))
     ks = [k for k in K_GRID[key] if k <= pool.R]
     probs, null_q = fa._qq_grid(pool.M)
     seeds = pool.margins - pool.margins.mean(axis=1, keepdims=True)
     gs = {f: predictions_tda(pool, tda, rep) for f, rep in FOOTINGS.items()}
 
-    sigma2 = seed_noise_variance_stacked(pool.margins)
+    sigma2 = _seed_noise_fn(pool)(pool.margins)        # centred if shared-per-replica
     _, diag = corrected_pearson(gs["E1"], pool.margins.mean(axis=0), sigma2 / pool.R,
                                 clip=CLIP)
     lam_q = np.asarray(diag["lambda_q"]) * pool.R
@@ -168,11 +160,9 @@ def _bank(banks_root, key, rng):
                                                   axis=0)) for i in range(len(sc))]
             row = {"k": k, "blocks": min(pool.R // k, G_MAX), "noise_share": lam / k,
                    "qq_exceed": _exceed(data[f][j][1], lo, hi),
-                   "qq_exceed_null": float(np.mean(loo)),
-                   "qq_curve": _sig(data[f][j][1]), "qq_lo": _sig(lo), "qq_hi": _sig(hi)}
+                   "qq_exceed_null": float(np.mean(loo))}
             for n in STATS:
                 row[n] = {"data": data[f][j][0][n], "control": ctrl[f][j][0][n],
-                          "null": _sig(sv[n]),
                           "null_mean": float(sv[n].mean()), "null_sd": float(sv[n].std(ddof=1)),
                           "null_lo": float(np.percentile(sv[n], BAND_PCT[0])),
                           "null_hi": float(np.percentile(sv[n], BAND_PCT[1]))}
@@ -184,12 +174,13 @@ def _bank(banks_root, key, rng):
                               for s in surr[f]])
             s_int -= s_int.mean()
             limit[n] = {"excess": d_int, "null_sd": float(s_int.std(ddof=1)),
-                        "z": d_int / float(s_int.std(ddof=1)), "null": _sig(s_int)}
+                        "z": d_int / float(s_int.std(ddof=1))}
         footings[f] = {"E": len(FOOTINGS[f]) if FOOTINGS[f] else tda.R_tda,
                        "per_k": per_k, "k_inf": limit}
-    return bank_stamp(pool), {"label": spec["label"], "color": spec["color"],
-                              "attributor": spec["tda"], "lambda_median": lam, "ks": ks,
-                              "null_q": null_q.tolist(), "footings": footings}
+    return bank_stamp(pool), {"label": _shared.BANK_LABEL[key],
+                              "color": _shared.BANK_COLOR[key],
+                              "attributor": fa.SWEEP_TDA[key], "lambda_median": lam, "ks": ks,
+                              "footings": footings}
 
 
 def _checkpoint(result):
@@ -205,7 +196,7 @@ def _checkpoint(result):
 def compute(banks_root):
     rng = np.random.default_rng(SEED)
     banks, out, skipped = {}, {}, []
-    for key in BANKS:
+    for key in fa.SWEEP_TDA:
         if not os.path.exists(os.path.join(banks_root, key, "pool.npz")):
             skipped.append(key)
             print(f"[proxy_sweep] {key}: no pool under {banks_root} — skipped", flush=True)

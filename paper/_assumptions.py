@@ -1,5 +1,6 @@
 """Bivariate-normality helpers for ``fig5``'s bridge checks and their stages: the squared
-Mahalanobis distance, its exact-null Q-Q grid, the banks and the negative control.
+Mahalanobis distance, its exact-null Q-Q grid, each bank's sweep attributor and the negative
+control.
 """
 
 import os
@@ -15,12 +16,10 @@ CONTROL_P = 0.7                  # the shared negative control: y -> sign(y) |y|
 QQ_N = 180                       # Q-Q grid points, spaced evenly along the axis
 QQ_P_MAX = 0.999                 # deepest quantile resolved (see _qq_grid)
 
-BANKS = [
-    {"key": "cifar10", "label": "CIFAR-10 / ResNet-9", "color": "#1b6ca8",
-     "tda": "pool_tda_ekfac"},
-    {"key": "qnli", "label": "QNLI / BERT", "color": "#c44536",
-     "tda": "pool_tda_trak5"},
-]
+# the attributor each bank's seed sweep and combined-estimator checks score (labels and
+# colours are _shared's)
+SWEEP_TDA = {"cifar10": "pool_tda_ekfac", "qnli": "pool_tda_trak5",
+             "wikitext2_gpt2_bae": "pool_tda_ekfac"}
 
 
 # -- shared numerics (column-wise, ddof=1 — the package convention) --------- #

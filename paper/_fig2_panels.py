@@ -41,9 +41,7 @@ from corrected_lds import (
     load_pool,
     load_pool_tda,
     member_noise_ratio,
-    pearson_to_spearman,
     predictions_tda,
-    reconstruct_rho_R,
 )
 from corrected_lds.evaluate import _seed_noise_fn
 
@@ -70,26 +68,10 @@ ROW_ASPECT = 0.58
 TOP_IN, BOTTOM_IN, GAP_IN = 0.39, 1.04, 0.60
 LEGEND_Y_IN, LEGEND_H_IN = 0.062, 0.286
 
-# This row in _shared's/_forecast's tables (this process only); greens, darkest = highest LDS
-_shared.BANK_COLOR[BANK] = "#2f7d4a"
-_shared.BANK_LABEL[BANK] = "WikiText-2 / GPT-2"
-_shared.A_METHODS[BANK] = [("pool_tda_trak5", "TRAK-5", "#238b45", "^"),
-                        ("pool_tda_ekfac", "EK-FAC", "#00441b", "s"),
-                        ("pool_tda_tracin", "TracIn", "#74c476", "D")]
-_shared.A_R_GRID[BANK] = [1, 2, 3, 5, 10]
-_shared.B_METHODS[BANK] = [("pool_tda_ekfac", "EK-FAC"), ("pool_tda_trak5", "TRAK-5"),
-                        ("pool_tda_tracin", "TracIn")]
-# the other rows' grid (m <= M/2 holds everywhere: M = 400 here, against 300 and 400)
-_shared.M_GRID[BANK] = [5, 10, 20, 40, 60, 100]
-forecast.METHODS[BANK] = [("pool_tda_ekfac", "EK-FAC", "#00441b", "s"),
-                      ("pool_tda_trak5", "TRAK-5", "#238b45", "^"),
-                      ("pool_tda_trak1", "TRAK-1", "#a1d99b", "v"),
-                      ("pool_tda_tracin", "TracIn", "#74c476", "D")]
-forecast.E_SHOWN[BANK] = 10
-
-# (a, b, d, e) show each row's TRAK unit in TRAK-1's slot, with its (c, f) name and style
+# (a, b, d, e, g, h) show each row's TRAK unit in TRAK-1's slot, with its (c, f, i) name and
+# style (this process only: figure 5 keeps TRAK-1)
 TRAK1 = "pool_tda_trak1"
-ROW_TRAK = {"cifar10": "pool_tda_trak10", "qnli": "pool_tda_trak5"}
+ROW_TRAK = {"cifar10": "pool_tda_trak10", "qnli": "pool_tda_trak5", BANK: "pool_tda_trak5"}
 for _bank, _unit in ROW_TRAK.items():
     _sty = {t: (lab, col, mk) for t, lab, col, mk in forecast.METHODS[_bank]}
     _shared.A_METHODS[_bank] = [(t, *_sty[t]) for t in
@@ -166,14 +148,6 @@ def _panel_a(job):
 
 
 # -- (b, e, h) -------------------------------------------------------------- #
-def _estimate_b(kind, r_seeds, g_sub, m_sub, s2_fn):
-    if kind == "naive":
-        return _shared._spearman(g_sub, m_sub.mean(axis=0))
-    rho, _ = reconstruct_rho_R(g_sub, m_sub.mean(axis=0), s2_fn(m_sub), k=r_seeds,
-                               R=_shared.TARGET_R, clip=_shared.CLIP)
-    return float(battery(pearson_to_spearman(rho)))
-
-
 def _panel_b(job):
     """The budget frontier against a rho_5 reference from seed half A, estimators from B."""
     bank, midx, tda, label = job
@@ -199,14 +173,14 @@ def _panel_b(job):
                 k = b % N_SPLITS_B
                 masks = rng.choice(pool.M, m_masks, replace=False)
                 seeds = rng.choice(splits[k][1], r_seeds, replace=False)
-                err[b] = _estimate_b(kind, r_seeds, g[masks],
-                                     pool.margins[np.ix_(seeds, masks)], s2_fn) - refs[k]
+                err[b] = _shared._estimate_b(kind, r_seeds, g[masks],
+                                             pool.margins[np.ix_(seeds, masks)], s2_fn) - refs[k]
             pts.append({"N": m_masks * r_seeds, "m": m_masks,
                         "rmse": float(np.sqrt(np.mean(err ** 2))),
                         "bias": float(err.mean()), "sd": float(err.std(ddof=1))})
         series.append({"kind": kind, "R": r_seeds, "points": pts})
     rng = np.random.default_rng([_shared.SEED, 7, 1])
-    floor = [_estimate_b("recon", 2, g, pool.margins[rng.choice(
+    floor = [_shared._estimate_b("recon", 2, g, pool.margins[rng.choice(
         splits[b % N_SPLITS_B][1], 2, replace=False)], s2_fn) - refs[b % N_SPLITS_B]
         for b in range(_shared.B_SUB)]
     print(f"[fig2 b] {bank}/{label}: reference {np.mean(refs):.4f} "

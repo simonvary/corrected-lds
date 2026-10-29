@@ -1,20 +1,21 @@
-"""Appendix to figure 5: the arcsin bridge in detail, on figure 5's target (figure 2(b,e)'s
-three methods at E=1, 5-seed readouts, all masks); rows CIFAR-10 (a-c) and QNLI (d-f).
+"""Figure 5, the appendix to figure 3: the arcsin bridge in detail, on the reconstructed rho_5
+route (three methods per setting at E=1, TRAK as TRAK-1; 5-seed readouts; all masks); rows
+CIFAR-10 (a-c), QNLI (d-f) and WikiText-2 (g-i).
 
-  (a, d) The bias, decomposed: reconstructed minus naive 5-seed Spearman (filled, 95%
+  (a, d, g) The bias, decomposed: reconstructed minus naive 5-seed Spearman (filled, 95%
          block-jackknife interval), the conversion alone (open: h(5-seed Pearson) minus
          5-seed Spearman) and its exactly Gaussian value at this M (cross: the finite-mask
          part, as the conversion yields the infinite-mask Spearman); grey: +-1 SE of one estimate.
-  (b, e) Bivariate normality as seeds are averaged: EK-FAC's detrended D^2 Q-Q (empirical
+  (b, e, h) Bivariate normality as seeds are averaged: EK-FAC's detrended D^2 Q-Q (empirical
          minus Gaussian quantile) at R = 1, 5 and all seeds; grey: figure 5's 90% Gaussian
          range at R = 5.  The negative control (the 5-seed readout through sign(f)|f|^0.7,
          moving only Pearson) is kept in the plotdata for the caption, not drawn.
-  (c, f) Where single-seed non-normality comes from: the readout's excess kurtosis minus
+  (c, f, i) Where single-seed non-normality comes from: the readout's excess kurtosis minus
          its Gaussian expectation against R, with the 90% range of exactly Gaussian data
          (rotation surrogates); the attribution method does not enter.
 
-(a, c, d, f) derive from ``fig5_panels.json``, ``bridge_estimators.json`` and
-``proxy_sweep.json``; (b, e) and the control need the banks for ``--recompute`` (about a
+(a, c, d, f, g, i) derive from ``fig5_panels.json``, ``bridge_estimators.json`` and
+``proxy_sweep.json``; (b, e, h) and the control need the banks for ``--recompute`` (about a
 minute).  R is the paper's seeds per mask (plotdata ``k``), not the ensemble size E (= 1).
 """
 
@@ -32,12 +33,14 @@ from _harness import PLOTDATA_DIR, run
 
 from corrected_lds import battery, load_pool, load_pool_tda, pearson_to_spearman, predictions_tda
 
-# Drawn at 7.0 in, printed at \textwidth (~5.5 in, ~79%): fonts >= 8.5 pt print at >= ~6.7 pt
-FIG = (7.0, 5.1)
+# Drawn at 7.0 in, printed at \textwidth (~5.5 in, ~79%): fonts >= 8.5 pt print at >= ~6.7 pt.
+# Heights in inches, one row per bank: column headers above the top row, keys below the last.
+FIG_W, ROW_IN, GAP_IN, TOP_IN, BOTTOM_IN = 7.0, 1.385, 0.62, 0.74, 0.97
+HEADER_IN = 0.347            # the column headers' baseline above the top row
 SE_GREY = "#9e9e9e"          # +-1 SE of the estimate, (a, d) — the darker grey
 RANGE_GREY = "#d6d6d6"       # 90% Gaussian range, (b, c, e, f) — the lighter grey
 KTICKS = (1, 10, 20, 30, 40)
-KEY_TOP = 0.095              # top of the keys, figure fraction
+KEY_TOP_IN = 0.485           # top of the keys, above the figure's bottom edge
 FS = {"tick": 8.5, "label": 9.0, "legend": 8.5, "title": 9.5, "header": 9.5,
       "letter": 11.5}
 HEADERS = ["bias of the estimate\n(decomposed)",
@@ -71,7 +74,7 @@ def compute(banks_root):
                       "lo": [r["kurt_f"]["null_lo"] - r["kurt_f"]["null_mean"] for r in rows],
                       "hi": [r["kurt_f"]["null_hi"] - r["kurt_f"]["null_mean"] for r in rows]}
     qqk = {bank: _qq_by_k(banks_root, bank, f5) for bank in _shared.B_METHODS}
-    return {"banks": f5["banks"], "bias": bias, "qq": f5["qq"], "kurt": kurt, "qqk": qqk,
+    return {"banks": f5["banks"], "bias": bias, "kurt": kurt, "qqk": qqk,
             "params": {"derived_from": ["fig5_panels.json", "bridge_estimators.json",
                                         "proxy_sweep.json"],
                        "kurtosis": "readout averaged over k seeds; proxy_sweep's E1 rows "
@@ -205,9 +208,10 @@ def plot(data, out_path):
                          "xtick.labelsize": FS["tick"], "ytick.labelsize": FS["tick"],
                          "legend.fontsize": FS["legend"]})
     banks = list(data["bias"])
-    fig, axes = plt.subplots(len(banks), 3, figsize=FIG)
-    fig.subplots_adjust(left=0.115, right=0.99, top=0.855, bottom=0.19, wspace=0.62,
-                        hspace=0.45)
+    fig_h = TOP_IN + len(banks) * ROW_IN + (len(banks) - 1) * GAP_IN + BOTTOM_IN
+    fig, axes = plt.subplots(len(banks), 3, figsize=(FIG_W, fig_h))
+    fig.subplots_adjust(left=0.115, right=0.99, top=1 - TOP_IN / fig_h,
+                        bottom=BOTTOM_IN / fig_h, wspace=0.62, hspace=GAP_IN / ROW_IN)
     qq_lim = 1.25 * max(max(np.max(np.abs(q["band"])),
                             max(np.max(np.abs(c)) for c in q["curves"]))
                         for q in data["qqk"].values())
@@ -230,14 +234,14 @@ def plot(data, out_path):
             ax_q.set_xlabel(r"Gaussian quantile of $D^2$")
             ax_k.set_xlabel("retrains per mask  $R$")
     for i, ax in enumerate(axes.ravel()):
-        ax.text(-0.50 if i % 3 == 0 else -0.36, 1.10, f"({'abcdef'[i]})",
+        ax.text(-0.50 if i % 3 == 0 else -0.36, 1.10, f"({chr(ord('a') + i)})",
                 transform=ax.transAxes, ha="left", va="bottom", fontsize=FS["letter"],
                 fontweight="bold")
     # column headers above the top row
     top_y = axes[0, 0].get_position().y1
     for ax, text in zip(axes[0], HEADERS):
         pos = ax.get_position()
-        fig.text((pos.x0 + pos.x1) / 2.0, top_y + 0.068, text, ha="center", va="bottom",
+        fig.text((pos.x0 + pos.x1) / 2.0, top_y + HEADER_IN / fig_h, text, ha="center", va="bottom",
                  fontsize=FS["header"], color="#333333", linespacing=1.15)
     # each key under the columns it explains (the Gaussian range under the second and third)
     blue = _shared.STYLE_B[("recon", 2)][0]
@@ -256,7 +260,7 @@ def plot(data, out_path):
                                   (key_range, "upper center", (col[1].x0 + col[2].x1) / 2.0,
                                    1)):
         fig.legend(handles=handles, loc=loc, ncol=ncol, frameon=False,
-                   fontsize=FS["legend"], bbox_to_anchor=(x, KEY_TOP), borderaxespad=0.0,
+                   fontsize=FS["legend"], bbox_to_anchor=(x, KEY_TOP_IN / fig_h), borderaxespad=0.0,
                    handlelength=1.3, columnspacing=0.8, handletextpad=0.4,
                    labelspacing=0.35)
     fig.savefig(out_path)

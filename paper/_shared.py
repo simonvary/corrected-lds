@@ -1,6 +1,7 @@
-"""Shared figure code: figure 2's method and bank tables, seeds and grids (computed by
-``_fig2_panels``), the rho_5 estimator ``_estimate_b``, column-wise correlation helpers,
-and figure 2's (b, e, h) drawer ``draw_b`` and column keys ``_column_legend``.
+"""Shared figure code: the three settings' bank and method tables, seeds and grids (figures
+2 and 5; ``_fig2_panels`` puts each row's TRAK unit in TRAK-1's slot), the rho_5 estimator
+``_estimate_b``, column-wise correlation helpers, and figure 2's (b, e, h) drawer ``draw_b``
+and column keys ``_column_legend``.
 """
 
 import os
@@ -26,8 +27,9 @@ TARGET_R = 5                     # panel (b) estimates the rho_5 convention
 ARROW_RMSE = 0.01
 B_SUB = 300                      # subsample replicates per (series, m) in panel (b)
 N_TRUTH = 40                     # random TARGET_R-seed subsets averaged into the rho_5 truth
-# m <= M/2, never the full pool; m=100 on both banks so the rows share one budget axis
-M_GRID = {"cifar10": [5, 10, 20, 40, 60, 100], "qnli": [5, 10, 20, 40, 60, 100]}
+# m <= M/2, never the full pool; m=100 on every bank so the rows share one budget axis
+M_GRID = {"cifar10": [5, 10, 20, 40, 60, 100], "qnli": [5, 10, 20, 40, 60, 100],
+          "wikitext2_gpt2_bae": [5, 10, 20, 40, 60, 100]}
 # one-row column keys with short handles; type in points at fig2's scale (_fig2_panels.TYPE)
 LEGEND_FS = 12
 LEGEND_HL = 0.6
@@ -35,8 +37,9 @@ B_TICK_FS = 12.0                 # (b)'s tick labels
 B_TITLE_FS = 13.5                # (b)'s method names
 B_ARROW_FS = 12.0                # (b)'s speedup tags
 
-BANK_COLOR = {"cifar10": "#1b6ca8", "qnli": "#c44536"}
-BANK_LABEL = {"cifar10": "CIFAR-10 / ResNet-9", "qnli": "QNLI / BERT"}
+BANK_COLOR = {"cifar10": "#1b6ca8", "qnli": "#c44536", "wikitext2_gpt2_bae": "#2f7d4a"}
+BANK_LABEL = {"cifar10": "CIFAR-10 / ResNet-9", "qnli": "QNLI / BERT",
+              "wikitext2_gpt2_bae": "WikiText-2 / GPT-2"}
 # panels (a/d): the methods at E=1, one replica each, the only comparable footing (full
 # ensembles confound the method with the model budget).  A TRAK E_f10/E_f20/E_f5 replica
 # bakes in e_features models (the mask projection loses Eq. 15's per-example pieces).
@@ -48,8 +51,13 @@ A_METHODS = {
     "qnli": [("pool_tda_ekfac", "EK-FAC", "#c44536", "s"),
              ("pool_tda_trak1", "TRAK", "#e0937f", "^"),
              ("pool_tda_tracin", "TracIn", "#7d2b20", "v")],
+    # greens, darkest = highest LDS
+    "wikitext2_gpt2_bae": [("pool_tda_trak1", "TRAK", "#238b45", "^"),
+                           ("pool_tda_ekfac", "EK-FAC", "#00441b", "s"),
+                           ("pool_tda_tracin", "TracIn", "#74c476", "D")],
 }
-A_R_GRID = {"cifar10": [1, 2, 3, 5, 10, 20, 40], "qnli": [1, 2, 3, 5, 10]}
+A_R_GRID = {"cifar10": [1, 2, 3, 5, 10, 20, 40], "qnli": [1, 2, 3, 5, 10],
+            "wikitext2_gpt2_bae": [1, 2, 3, 5, 10]}
 # panels (b/e): the two routes to rho_5, one small panel per method, at E=1 as (a/d)
 SERIES_B = [("naive", 5), ("recon", 2)]
 STYLE_B = {("naive", 5): ("#c44536", "--", "o", 1.7, r"naive Spearman, $R{=}5$"),
@@ -59,6 +67,8 @@ B_METHODS = {
                 ("pool_tda_source_L3", "SOURCE")],
     "qnli": [("pool_tda_ekfac", "EK-FAC"), ("pool_tda_trak1", "TRAK"),
              ("pool_tda_tracin", "TracIn")],
+    "wikitext2_gpt2_bae": [("pool_tda_ekfac", "EK-FAC"), ("pool_tda_trak1", "TRAK"),
+                           ("pool_tda_tracin", "TracIn")],
 }
 
 
@@ -75,12 +85,12 @@ def _spearman(a, b, rank_a=None):
     return float(battery(_colcorr(ra, stats.rankdata(b, axis=0))))
 
 
-def _estimate_b(kind, r_seeds, g_sub, margins_sub):
+def _estimate_b(kind, r_seeds, g_sub, margins_sub, s2_fn=seed_noise_variance_stacked):
+    """One rho_5 estimate; ``s2_fn`` is the pool's seed-noise estimator (``_seed_noise_fn``)."""
     if kind == "naive":
         return _spearman(g_sub, margins_sub.mean(axis=0))
-    s2 = seed_noise_variance_stacked(margins_sub)
-    rho, _ = reconstruct_rho_R(g_sub, margins_sub.mean(axis=0), s2, k=r_seeds, R=TARGET_R,
-                               clip=CLIP)
+    rho, _ = reconstruct_rho_R(g_sub, margins_sub.mean(axis=0), s2_fn(margins_sub),
+                               k=r_seeds, R=TARGET_R, clip=CLIP)
     return float(battery(pearson_to_spearman(rho)))
 
 

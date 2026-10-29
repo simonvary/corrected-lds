@@ -35,6 +35,7 @@ import _assumptions as fa
 import _rmse_corrected as f1a
 import _shared
 from _harness import bank_stamp, run
+from _heldout import seed_noise
 
 from corrected_lds import (
     battery,
@@ -44,8 +45,8 @@ from corrected_lds import (
     pearson_to_spearman,
     predictions_tda,
     reconstruct_rho_R,
-    seed_noise_variance_stacked,
 )
+from corrected_lds.evaluate import _seed_noise_fn
 from corrected_lds.rank_debias import unbiased_spearman
 
 SEED = 0
@@ -53,9 +54,12 @@ CLIP = f1a.CLIP
 NB = 20                          # mask blocks for every jackknife
 G_MAX = 10                       # disjoint seed groups averaged per seed level
 FOOTINGS = {"E1": [0], "full": None}
-K_IN = {"cifar10": [2, 3, 5, 10, 20, 40], "qnli": [2, 3, 5, 10, 20]}
-K_OUT = {"cifar10": [5, 10, 15, 20, 30, 40], "qnli": [4, 5, 6, 8, 10, 15, 20]}
-MATCHED = {"cifar10": (20, 40), "qnli": (10, 20)}     # same-size step as R -> infinity
+K_IN = {"cifar10": [2, 3, 5, 10, 20, 40], "qnli": [2, 3, 5, 10, 20],
+        "wikitext2_gpt2_bae": [2, 3, 5, 10, 20]}
+K_OUT = {"cifar10": [5, 10, 15, 20, 30, 40], "qnli": [4, 5, 6, 8, 10, 15, 20],
+         "wikitext2_gpt2_bae": [4, 5, 6, 8, 10, 15, 20]}
+# same-size step as R -> infinity
+MATCHED = {"cifar10": (20, 40), "qnli": (10, 20), "wikitext2_gpt2_bae": (10, 20)}
 DEPLOYED = K_IN                   # SE of one application at every input seed count
 N_DRAWS = 200                    # random 2-seed draws for the per-query estimator
 INF = "inf"
@@ -105,7 +109,7 @@ def _keeps(m, nb):
     return keep
 
 
-def _level(g, rank_g, seeds_grp, keeps, targets, is_input):
+def _level(g, rank_g, seeds_grp, keeps, targets, is_input, s2_fn):
     """Everything one seed group contributes, on the full mask set and each deletion:
     the debiased Spearman, and (input groups) rho_k and theta_K for every target."""
     m = g.shape[0]
@@ -119,7 +123,7 @@ def _level(g, rank_g, seeds_grp, keeps, targets, is_input):
         if not is_input:
             continue
         k = seeds_grp.shape[0]
-        s2 = seed_noise_variance_stacked(seeds_grp[:, keep])
+        s2 = s2_fn(seeds_grp[:, keep])
         out["rho"].append(float(battery(f1a._colwise_corr(gk, yk))))
         for K in targets:
             if K == INF:
@@ -144,20 +148,20 @@ def _jk_se(reps):
     return float(np.sqrt((len(reps) - 1) / len(reps) * np.sum((reps - reps.mean()) ** 2)))
 
 
-def _oracle_factor(g, margins):
+def _oracle_factor(g, margins, s2_fn):
     """The full-bank Pearson factor for k -> K seeds, from the full-bank rho_inf and lambda:
     ``battery(rho_inf/sqrt(1+lam/K)) / battery(rho_inf/sqrt(1+lam/k))``."""
     r_ = margins.shape[0]
-    s2 = seed_noise_variance_stacked(margins)
+    s2 = s2_fn(margins)
     rho_inf, diag = corrected_pearson(g, margins.mean(axis=0), s2 / r_, clip=CLIP)
     lam = np.asarray(diag["lambda_q"], float) * r_
     att = lambda n: float(battery(rho_inf / np.sqrt(1.0 + lam / n)))
     return lambda k, K: att(K) / att(k)
 
 
-def _combined(key, g, margins, keeps):
+def _combined(key, g, margins, keeps, s2_fn):
     r_ = margins.shape[0]
-    oracle = _oracle_factor(g, margins)
+    oracle = _oracle_factor(g, margins, s2_fn)
     rank_g = [stats.rankdata(g[k], axis=0) for k in keeps]
     levels = sorted(set(K_IN[key]) | set(K_OUT[key]))
     groups = {lv: [margins[j * lv:(j + 1) * lv] for j in range(min(r_ // lv, G_MAX))]
@@ -166,7 +170,8 @@ def _combined(key, g, margins, keeps):
     for lv in levels:
         is_in = lv in K_IN[key]
         targets = [K for K in K_OUT[key] if K > lv] + [INF] if is_in else []
-        res[lv] = [_level(g, rank_g, grp, keeps, targets, is_in) for grp in groups[lv]]
+        res[lv] = [_level(g, rank_g, grp, keeps, targets, is_in, s2_fn)
+                   for grp in groups[lv]]
         print(f"[bridge_estimators] {key}: seed level {lv} ({len(groups[lv])} groups)",
               flush=True)
     pairs = []
@@ -215,7 +220,7 @@ def _gaussian_conversion(g, margins, subsets5, rng, n_rep=20):
     return float(np.mean(gaps)), float(np.std(gaps, ddof=1) / np.sqrt(n_rep))
 
 
-def _per_query(g, margins, keeps, rng):
+def _per_query(g, margins, keeps, rng, s2_fn):
     r_ = margins.shape[0]
     subsets5 = [rng.choice(r_, _shared.TARGET_R, replace=False) for _ in range(_shared.N_TRUTH)]
     draws2 = [rng.choice(r_, 2, replace=False) for _ in range(N_DRAWS)]
@@ -229,7 +234,7 @@ def _per_query(g, margins, keeps, rng):
             sp = f1a._colwise_corr(rank_g, stats.rankdata(yb, axis=0))
             truth.append(float(battery(sp)))
             conv.append(float(battery(_h(f1a._colwise_corr(gk, yb)))) - truth[-1])
-        est = np.array([_shared._estimate_b("recon", 2, gk, mk[s]) for s in draws2])
+        est = np.array([_shared._estimate_b("recon", 2, gk, mk[s], s2_fn) for s in draws2])
         out.append({"truth": float(np.mean(truth)), "conv": float(np.mean(conv)),
                     "est_mean": float(est.mean()), "est_sd": float(est.std(ddof=1))})
     full = out[0]
@@ -250,18 +255,20 @@ def _per_query(g, margins, keeps, rng):
 def compute(banks_root):
     rng = np.random.default_rng(SEED)
     banks, out = {}, {}
-    for spec in fa.BANKS:
-        key = spec["key"]
+    for key, sweep_tda in fa.SWEEP_TDA.items():
         pool = load_pool(os.path.join(banks_root, key, "pool.npz"))
+        s2_fn = _seed_noise_fn(pool)               # centred for a shared-per-replica pool
         banks[key] = bank_stamp(pool)
         perm = rng.permutation(pool.M)              # blocks = contiguous runs of this order
         margins = pool.margins[:, perm]
         keeps = _keeps(pool.M, NB)
-        tda = load_pool_tda(os.path.join(banks_root, key, f"{spec['tda']}.npz"))
+        tda = load_pool_tda(os.path.join(banks_root, key, f"{sweep_tda}.npz"))
         comb_ = {}
         for f, rep in FOOTINGS.items():
             g = predictions_tda(pool, tda, rep)[perm]
-            comb_[f] = {"E": 1 if rep else int(tda.R_tda), **_combined(key, g, margins, keeps)}
+            with seed_noise(pool):             # and in _rmse_corrected's check estimator
+                comb_[f] = {"E": 1 if rep else int(tda.R_tda),
+                            **_combined(key, g, margins, keeps, s2_fn)}
             print(f"[bridge_estimators] {key} {f}: full-bank {comb_[f]['full_bank']:.5f}",
                   flush=True)
         pq = {}
@@ -269,13 +276,13 @@ def compute(banks_root):
             g = predictions_tda(pool, load_pool_tda(os.path.join(banks_root, key,
                                                                  f"{tda_name}.npz")),
                                 _shared.E1_REPLICAS)[perm]
-            pq[tda_name] = {"label": label, **_per_query(g, margins, keeps, rng)}
+            pq[tda_name] = {"label": label, **_per_query(g, margins, keeps, rng, s2_fn)}
             p = pq[tda_name]
             print(f"[bridge_estimators] {key} {label}: D {p['D']:+.5f} +- {p['D_se']:.5f} "
                   f"(conversion {p['conversion']:+.5f}); estimator SE {p['se_estimator']:.5f}",
                   flush=True)
-        out[key] = {"label": spec["label"], "color": spec["color"],
-                    "attributor": spec["tda"], "R": pool.R, "M": pool.M,
+        out[key] = {"label": _shared.BANK_LABEL[key], "color": _shared.BANK_COLOR[key],
+                    "attributor": sweep_tda, "R": pool.R, "M": pool.M,
                     "combined": comb_, "per_query": pq}
         del pool, margins
     return {"banks": banks, "panels": out,
